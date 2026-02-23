@@ -3,32 +3,17 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [file, setFile] = useState(null);
   const [tracks, setTracks] = useState(null);
 
-  const handleUpload = async (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
+  const loadTracks = () => {
+    const t = Date.now();
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
+    setTracks({
+      vocals: `/stems/vocals.wav?t=${t}`,
+      drums: `/stems/drums.wav?t=${t}`,
+      bass: `/stems/bass.wav?t=${t}`,
+      other: `/stems/other.wav?t=${t}`,
     });
-
-    alert("Uploaded to GPU!");
-  };
-
-const t = Date.now();
-
-setTracks({
-  vocals: `/stems/vocals.wav?t=${t}`,
-  drums: `/stems/drums.wav?t=${t}`,
-  bass: `/stems/bass.wav?t=${t}`,
-  other: `/stems/other.wav?t=${t}`,
-});
   };
 
   return (
@@ -40,7 +25,18 @@ setTracks({
       <input
         type="file"
         accept="audio/*"
-        onChange={handleUpload}
+        onChange={async (e) => {
+          const file = e.target.files[0];
+          const formData = new FormData();
+          formData.append("file", file);
+
+          await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          alert("Uploaded to GPU!");
+        }}
         className="mb-4"
       />
 
