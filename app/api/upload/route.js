@@ -1,5 +1,8 @@
 export const runtime = "nodejs";
 
+import fs from "fs";
+import path from "path";
+
 export async function POST(req) {
   const data = await req.formData();
   const file = data.get("file");
@@ -8,7 +11,20 @@ export async function POST(req) {
     return new Response("No file uploaded", { status: 400 });
   }
 
-  console.log("Uploaded file:", file.name);
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
 
-  return new Response("File received", { status: 200 });
+  const uploadDir = path.join(process.cwd(), "uploads");
+
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+  }
+
+  const filePath = path.join(uploadDir, file.name);
+
+  fs.writeFileSync(filePath, buffer);
+
+  console.log("Saved file to:", filePath);
+
+  return new Response("File saved successfully", { status: 200 });
 }
