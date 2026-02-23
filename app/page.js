@@ -5,9 +5,26 @@ import { useState } from "react";
 export default function Home() {
   const [file, setFile] = useState(null);
 
-  const handleUpload = (e) => {
-    setFile(e.target.files[0]);
-  };
+const handleUpload = async (e) => {
+  const selectedFile = e.target.files[0];
+  setFile(selectedFile);
+
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    alert("Upload failed");
+    return;
+  }
+
+  const text = await res.text();
+  alert(text);
+};
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
