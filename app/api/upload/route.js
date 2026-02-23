@@ -24,6 +24,14 @@ export async function POST(req) {
 
   fs.writeFileSync(filePath, buffer);
 
+await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/octet-stream",
+  },
+  body: buffer,
+});
+
   console.log("Saved file to:", filePath);
 
   return new Response("File saved successfully", { status: 200 });
