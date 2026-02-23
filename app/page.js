@@ -3,7 +3,23 @@
 import { useState } from "react";
 
 export default function Home() {
+  const [file, setFile] = useState(null);
   const [tracks, setTracks] = useState(null);
+
+  const handleUpload = async (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    alert("Uploaded to GPU!");
+  };
 
   const loadTracks = () => {
     setTracks({
@@ -16,7 +32,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">Demo Rebuilder Workstation</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Demo Rebuilder Workstation
+      </h1>
+
+      <input
+        type="file"
+        accept="audio/*"
+        onChange={handleUpload}
+        className="mb-4"
+      />
 
       <button
         onClick={loadTracks}
