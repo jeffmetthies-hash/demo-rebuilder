@@ -27,11 +27,13 @@ export async function POST(req) {
 await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run", {
   method: "POST",
   headers: {
-    "Content-Type": "application/octet-stream",
+    "Content-Type": "application/json",
   },
-  body: buffer,
+  body: JSON.stringify({
+    file_bytes: Array.from(buffer),
+    filename: file.name,
+  }),
 });
-
   console.log("Saved file to:", filePath);
 
   return new Response("File saved successfully", { status: 200 });
