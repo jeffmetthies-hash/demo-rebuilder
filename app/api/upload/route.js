@@ -46,8 +46,7 @@ saveStem("vocals", stems.vocals);
 saveStem("drums", stems.drums);
 saveStem("bass", stems.bass);
 saveStem("other", stems.other);
-  }),
-});
+
   console.log("Saved file to:", filePath);
 
   return new Response("File saved successfully", { status: 200 });
