@@ -21,13 +21,14 @@ export default function Home() {
     alert("Uploaded to GPU!");
   };
 
-  const loadTracks = () => {
-    setTracks({
-      vocals: "/stems/vocals.wav",
-      drums: "/stems/drums.wav",
-      bass: "/stems/bass.wav",
-      other: "/stems/other.wav",
-    });
+const t = Date.now();
+
+setTracks({
+  vocals: `/stems/vocals.wav?t=${t}`,
+  drums: `/stems/drums.wav?t=${t}`,
+  bass: `/stems/bass.wav?t=${t}`,
+  other: `/stems/other.wav?t=${t}`,
+});
   };
 
   return (
