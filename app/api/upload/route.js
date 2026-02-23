@@ -24,7 +24,7 @@ export async function POST(req) {
 
   fs.writeFileSync(filePath, buffer);
 
-await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run", {
+const res = await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -32,6 +32,20 @@ await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run"
   body: JSON.stringify({
     file_bytes: Array.from(buffer),
     filename: file.name,
+  }),
+});
+
+const stems = await res.json();
+
+const saveStem = (name, data) => {
+  const stemBuffer = Buffer.from(data, "base64");
+  fs.writeFileSync(`./public/stems/${name}.wav`, stemBuffer);
+};
+
+saveStem("vocals", stems.vocals);
+saveStem("drums", stems.drums);
+saveStem("bass", stems.bass);
+saveStem("other", stems.other);
   }),
 });
   console.log("Saved file to:", filePath);

@@ -25,7 +25,7 @@ def separate_audio(file_bytes: bytes, filename: str):
     with open(input_path, "wb") as f:
         f.write(bytes(file_bytes))
 
-    os.system(f"demucs -o /tmp/output {input_path}")
+    os.system(f"demucs -n htdemucs_ft -o /tmp/output {input_path}")
 
     stem_folder = f"/tmp/output/htdemucs/{filename.split('.')[0]}"
 
