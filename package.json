@@ -2,6 +2,9 @@
   "name": "demo-rebuilder",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +12,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@vercel/blob": "^2.3.0",
+    "@vercel/blob": "^0.23.4",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -19,8 +22,5 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4"
-  },
-  "engines": {
-    "node": "20.x"
   }
 }

@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import fs from "fs";
-import path from "path";
+import { put } from "@vercel/blob";
 
 export async function POST(req) {
   const data = await req.formData();
@@ -11,46 +11,47 @@ export async function POST(req) {
     return new Response("No file uploaded", { status: 400 });
   }
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+  const buffer = Buffer.from(await file.arrayBuffer());
 
-  const uploadDir = path.join(process.cwd(), "uploads");
+  // Send to GPU (Modal)
+  const res = await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      file_bytes: Array.from(buffer),
+      filename: file.name,
+    }),
+  });
 
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-  }
+  const stems = await res.json();
 
-  const filePath = path.join(uploadDir, file.name);
+  // Save stems to Blob storage
+  const saveStem = async (name, data) => {
+    const stemBuffer = Buffer.from(data, "base64");
 
-  fs.writeFileSync(filePath, buffer);
+    const blob = await put(
+      `stems/${Date.now()}-${name}.wav`,
+      stemBuffer,
+      { access: "public" }
+    );
 
-const res = await fetch("https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    file_bytes: Array.from(buffer),
-    filename: file.name,
-  }),
-});
+    return blob.url;
+  };
 
-const stems = await res.json();
+  const vocalUrl = await saveStem("vocals", stems.vocals);
+  const drumUrl = await saveStem("drums", stems.drums);
+  const bassUrl = await saveStem("bass", stems.bass);
+  const otherUrl = await saveStem("other", stems.other);
 
-const saveStem = (name, data) => {
-  const stemBuffer = Buffer.from(data, "base64");
-  const path = `./public/stems/${name}.wav`;
-
-  fs.writeFileSync(path, stemBuffer);
-  console.log("Saved:", path);
-};
-
-saveStem("vocals", stems.vocals);
-saveStem("drums", stems.drums);
-saveStem("bass", stems.bass);
-saveStem("other", stems.other);
-
-  console.log("Saved file to:", filePath);
-
-  return new Response("File saved successfully", { status: 200 });
+  return new Response(
+    JSON.stringify({
+      vocals: vocalUrl,
+      drums: drumUrl,
+      bass: bassUrl,
+      other: otherUrl,
+    }),
+    { status: 200 }
+  );
 }
