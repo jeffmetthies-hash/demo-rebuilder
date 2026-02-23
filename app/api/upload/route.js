@@ -39,7 +39,10 @@ const stems = await res.json();
 
 const saveStem = (name, data) => {
   const stemBuffer = Buffer.from(data, "base64");
-  fs.writeFileSync(`./public/stems/${name}.wav`, stemBuffer);
+  const path = `./public/stems/${name}.wav`;
+
+  fs.writeFileSync(path, stemBuffer);
+  console.log("Saved:", path);
 };
 
 saveStem("vocals", stems.vocals);
