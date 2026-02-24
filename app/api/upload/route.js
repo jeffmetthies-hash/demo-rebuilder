@@ -10,27 +10,33 @@ export async function POST(req) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    const base64 = buffer.toString("base64");
 
     const modalResponse = await fetch(
       "https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/octet-stream",
+          "Content-Type": "application/json",
         },
-        body: buffer,
+        body: JSON.stringify({
+          file_bytes: base64,
+          filename: file.name,
+        }),
       }
     );
 
+    const text = await modalResponse.text();
+    console.log("Modal returned:", text);
+
     if (!modalResponse.ok) {
-      const text = await modalResponse.text();
-      console.error("Modal error:", text);
       return new Response(text, { status: 500 });
     }
 
-    const stems = await modalResponse.json();
-
-    return Response.json(stems);
+    return new Response(text, {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Upload failed:", err);
     return new Response("Server error", { status: 500 });
