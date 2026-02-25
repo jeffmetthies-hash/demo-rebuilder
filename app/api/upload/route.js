@@ -12,8 +12,8 @@ export async function POST(req) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const base64 = buffer.toString("base64");
 
-    const modalResponse = await fetch(
-      "https://jeffmetthies-hash--demo-rebuilder-separate-audio.modal.run",
+    const modalResponse = await fetch("https://jeffmetthies-hash--demo-rebuilder-v99-separate-audio.modal.run"
+      ,
       {
         method: "POST",
         headers: {

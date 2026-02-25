@@ -1,39 +1,70 @@
 import modal
+import subprocess
+import tempfile
+import base64
+import os
+import time
 
-app = modal.App("demo-rebuilder")
+app = modal.App("demo-rebuilder-v99")
 
 image = (
     modal.Image.debian_slim()
-    .pip_install(
-        "demucs",
-        "ffmpeg-python",
-        "fastapi[standard]"
-    )
+    .pip_install("demucs", "fastapi", "uvicorn", "vercel-blob")
+    .apt_install("ffmpeg")
 )
 
-@app.function(image=image, gpu="T4")
+@app.function(
+    image=image,
+    secrets=[modal.Secret.from_name("vercel-blob-token")]
+)
 @modal.fastapi_endpoint(method="POST")
-def separate_audio(file_bytes: bytes, filename: str):
-    import os
-    import base64
+async def separate_audio(request):
 
-    os.makedirs("/tmp/input", exist_ok=True)
-    os.makedirs("/tmp/output", exist_ok=True)
+    from fastapi.responses import JSONResponse
+    from vercel_blob import put
 
-    input_path = f"/tmp/input/{filename}"
+    data = await request.json()
 
-    with open(input_path, "wb") as f:
-        f.write(bytes(file_bytes))
+    audio = base64.b64decode(data["file_bytes"])
+    filename = data["filename"]
 
-    os.system(f"demucs -n htdemucs_ft -o /tmp/output {input_path}")
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as f:
+        f.write(audio)
+        input_path = f.name
 
-    stem_folder = f"/tmp/output/htdemucs/{filename.split('.')[0]}"
+    output_dir = "/tmp/output"
 
-    stems = {}
+    run = subprocess.run(
+        ["demucs", "-n", "htdemucs_ft", "-o", output_dir, input_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
-    for stem in ["vocals", "drums", "bass", "other"]:
-        path = f"{stem_folder}/{stem}.wav"
-        with open(path, "rb") as s:
-            stems[stem] = base64.b64encode(s.read()).decode("utf-8")
+    if run.returncode != 0:
+        return JSONResponse({"error": run.stderr.decode()}, status_code=500)
 
-    return stems
+    model_folder = os.path.join(output_dir, "htdemucs_ft")
+    song_folder = os.listdir(model_folder)[0]
+    stem_path = os.path.join(model_folder, song_folder)
+
+    for i in range(30):
+        if os.path.exists(f"{stem_path}/vocals.wav"):
+            break
+        time.sleep(1)
+
+    def upload(name):
+        with open(f"{stem_path}/{name}.wav", "rb") as f:
+            res = put(
+                f"stems/{filename}_{name}.wav",
+                f.read(),
+                access="public",
+                token=os.environ["BLOB_READ_WRITE_TOKEN"]
+            )
+            return res["url"]
+
+    return JSONResponse({
+        "vocals": upload("vocals"),
+        "drums": upload("drums"),
+        "bass": upload("bass"),
+        "other": upload("other")
+    })
